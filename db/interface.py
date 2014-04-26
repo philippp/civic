@@ -1,6 +1,7 @@
 import secrets
 import MySQLdb
 import pprint
+import logging
 
 class DBInterface(object):
     def __init__(self):
@@ -34,7 +35,10 @@ class DBInterface(object):
                 ["%s = VALUES(%s)" % (c, c) for c in update_cols])
             sqlstr += ";"
         try:
-            self.cursor.execute(sqlstr, row)
+            if hasattr(row, '__iter__'):
+                self.cursor.executemany(sqlstr, row)
+            else:
+                self.cursor.execute(sqlstr, row)
         except Exception, e:
             logging.error(str(e))
             logging.error("Column names: ", str(colnames))
@@ -53,7 +57,15 @@ class DBInterface(object):
             for key, val in kwargs.iteritems():
                 if type(val) in (str, unicode):
                     val = "\"%s\"" % val
-                conditionals.append("%s = %s" % (key, val))
+                if hasattr(val, "__iter__"):
+                    values = list()
+                    for individual_value in val:
+                        if type(individual_value) in (str, unicode):
+                            individual_value = "\"%s\"" % individual_value
+                        values.append(individual_value)
+                    conditionals.append("%s IN (%s)" % (key, ",".join(values)))
+                else:
+                    conditionals.append("%s = %s" % (key, val))
             sqlstr += " AND ".join(conditionals)
         if limit > 0:
             sqlstr += " LIMIT %d" % limit
