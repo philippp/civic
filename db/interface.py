@@ -24,8 +24,13 @@ class DBInterface(object):
             sqlstr += ",".join(
                 ["%s = VALUES(%s)" % (c, c) for c in update_cols])
             sqlstr += ";"
-
-        self.cursor.execute(sqlstr, row)
+        try:
+            self.cursor.execute(sqlstr, row)
+        except Exception, e:
+            logging.error(str(e))
+            logging.error("Column names: ", str(colnames))
+            logging.error("Data row: ", str(row))
+            raise e
         self.db.commit()
         return self.cursor.lastrowid
 
