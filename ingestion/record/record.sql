@@ -14,8 +14,7 @@ CREATE TABLE record
   grantees_raw VARCHAR(255),
   grantors_raw VARCHAR(255),
   reel_image VARCHAR(255),
-  PRIMARY KEY(id),
-  INDEX by_blklot(block_lot)
+  PRIMARY KEY(id)
 )
 ENGINE=InnoDB
 DEFAULT CHARSET=utf8;
