@@ -11,17 +11,15 @@ import ingestion.record.ingest
 XSLX_FILE = 'data/address/EAS_address_with_blklot.xlsx'
 JSON_RECORD_FILES = 'data/record/deeds/*.json'
 
-def rebuild_address_tables(writer, target_file = None, mode = 'UPDATE'):
+def rebuild_address_tables(writer, target_file = None):
     if not target_file:
         target_file = XSLX_FILE
     return ingestion.address.ingest.ingest(target_file, writer)
 
-def rebuild_record_tables(writer, target_file = None, mode = 'UPDATE'):
+def rebuild_record_tables(writer, target_file = None):
     if not target_file:
         target_file = JSON_RECORD_FILES
-    skip = (mode == "SKIP")
-    return ingestion.record.ingest.ingest(target_file, writer,
-                                          skip_existing = skip)
+    return ingestion.record.ingest.ingest(target_file, writer)
 
 TARGETS = {
     "ADDRESS" : rebuild_address_tables,
@@ -43,17 +41,12 @@ def parse_options():
     parser.add_option("-f", "--file", dest="file",
                       help="(optional) Specify which file to import.",
                       metavar="FILE")
-    parser.add_option("-m", "--mode", dest="mode",
-                      help=mode_help,
-                      metavar="MODE")
     parser.add_option("-d", "--database", dest="database", default="DEV",
                       help="Database for ingestion, as defined in secrets.py.",
                       metavar="DATABASE")
     
     opts, args = parser.parse_args()
-    if not opts.mode:
-        opts.mode = "UPDATE"
-    if opts.target not in TARGETS.keys() or opts.mode not in ["UPDATE", "SKIP"]:
+    if opts.target not in TARGETS.keys():
         parser.print_help()
         sys.exit(2)
     return opts

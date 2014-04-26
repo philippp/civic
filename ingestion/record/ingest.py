@@ -9,7 +9,7 @@ import sys
 """
 Given a source file (or wildcard) for JSON-formatted records, ingest
 these to the database."""
-def ingest(json_record_file, db_interface, skip_existing = False):
+def ingest(json_record_file, db_interface):
     source_files = glob.glob(json_record_file)
     source_files.sort()
     if len(source_files) == 0:
@@ -112,17 +112,7 @@ def ingest_records(records, db_interface):
         best_name = entity_aliases)
     for row in response:
         alias_entity_map[row[0]] = row[1]
-
-    if len(alias_entity_map.keys()) != len(entity_aliases):
-        print "WE'RE GOING DOWN!!!!"
-        if len(alias_entity_map.keys()) > len(entity_aliases):
-            print "More keys in the map than we had entries in the list"
-            pprint.pprint(set(alias_entity_map.keys()) - set(entity_aliases))
-        else:
-            print "Bigger list than we had keys in the map"
-            pprint.pprint(set(entity_aliases) - set(alias_entity_map.keys()))
-        print "time to die."
-        sys.exit(2)
+    assert len(alias_entity_map.keys()) == len(entity_aliases)
 
     # Step 3.d: For the aliases new to us, we also need alias-entity maps in DB.
     new_alias_rows = list()
