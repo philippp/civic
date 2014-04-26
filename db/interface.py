@@ -6,15 +6,24 @@ class DBInterface(object):
     def __init__(self):
         self.db = None
 
-    def initialize(self):
-        self.db = MySQLdb.connect(**secrets.DB_CONFIG)
+    def initialize(self, database):
+        self.db = MySQLdb.connect(**secrets.DB_CONFIGS[database])
         self.cursor = self.db.cursor()
 
+    """
+    Commits all outstanding writes to DB. Only meaningful when write_row
+    has been called with autocommit = False.
+    """
+    def commit_writes(self):
+        self.db.commit()
+
+    def get_rows_from_last_committed_write(self):
+        return self.cursor.rowcount
     """
     Writes a row to the datebase. Takes the column names of the table,
     with indices corresponding to the values in row. Table is the table to write
     into, and if update_cols is populated, we update the specified cells. """
-    def write_row(self, colnames, row, table, update_cols=None):
+    def write_row(self, colnames, row, table, update_cols=None, autocommit=True):
         joined_colnames = ",".join(colnames)
         value_template = " ,".join(["%s" for c in colnames])
         sqlstr = "INSERT INTO %s (%s) VALUES (%s)" % (
@@ -31,7 +40,8 @@ class DBInterface(object):
             logging.error("Column names: ", str(colnames))
             logging.error("Data row: ", str(row))
             raise e
-        self.db.commit()
+        if autocommit:
+            self.db.commit()
         return self.cursor.lastrowid
 
     def read_rows(self, colnames, table, limit=0, **kwargs):
