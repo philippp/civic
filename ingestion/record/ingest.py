@@ -24,13 +24,19 @@ def ingest(json_record_file, db_interface):
 
 def ingest_record(record, db_interface):
     # Step 1: Find or update a record entry.
+    record['grantees'] = [g.replace("\\","") for g in record['grantees']]
+    record['grantors'] = [g.replace("\\","") for g in record['grantors']]
+
+    grantees_raw = ", ".join(["\"%s\"" % g for g in record['grantees']])
+    grantors_raw = ", ".join(["\"%s\"" % g for g in record['grantors']])
+
     db_record = {
         "id" : record["id"],
         "record_date" : datetime.datetime.strptime(
             record['date'],"%m/%d/%Y").strftime("%Y-%m-%d"),
         "record_type" : record["doctype"],
-        "grantees_raw" : ", ".join(["\"%s\"" % g for g in record['grantees']]),
-        "grantors_raw" : ", ".join(["\"%s\"" % g for g in record['grantors']]),
+        "grantees_raw" : grantees_raw,
+        "grantors_raw" : grantors_raw,
         "reel_image" : record["reel_image"]
         }
     colnames = db_record.keys()
@@ -70,8 +76,8 @@ def ingest_record(record, db_interface):
                     "alias_to_entity")
             else:
                 # We make the assumption that an alias can only point to one
-                # org. This is a fallacy, since common names are common and will
-                # overlap. TODO(philippp): Fix this.
+                # org. This is a fallacy, since common names will overlap.
+                # TODO(philippp): Fix this.
                 entity_id = response[0][1]
 
             db_interface.write_row(
