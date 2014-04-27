@@ -21,7 +21,7 @@ class DBInterface(object):
     def get_rows_from_last_committed_write(self):
         return self.cursor.rowcount
     """
-    Writes a row to the datebase. Takes the column names of the table,
+    Writes one or more rows to the datebase. Takes the column names of the table,
     with indices corresponding to the values in row. Table is the table to write
     into, and if update_cols is populated, we update the specified cells. """
     def write_row(self, colnames, row, table, update_cols=None, autocommit=True):
@@ -35,7 +35,7 @@ class DBInterface(object):
                 ["%s = VALUES(%s)" % (c, c) for c in update_cols])
             sqlstr += ";"
         try:
-            if hasattr(row, '__iter__'):
+            if len(row) and hasattr(row[0], '__iter__'):
                 self.cursor.executemany(sqlstr, row)
             else:
                 self.cursor.execute(sqlstr, row)
