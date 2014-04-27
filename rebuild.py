@@ -7,23 +7,33 @@ import sys
 import db.interface
 import ingestion.address.ingest
 import ingestion.record.ingest
+import ingestion.eviction.ingest
 
-XSLX_FILE = 'data/address/EAS_address_with_blklot.xlsx'
-JSON_RECORD_FILES = 'data/record/deeds/*.json'
+ADDRESS_FILE = 'data/address/EAS_address_with_blklot.xlsx'
+RECORD_FILES = 'data/record/deeds/*.json'
+EVICTION_ELLIS_FILES = [
+    'data/eviction/SF Ellis Petition List 1997-March 13.xls',
+    'data/eviction/kelsey_ellis_most_recent.csv']
 
 def rebuild_address_tables(writer, target_file = None):
     if not target_file:
-        target_file = XSLX_FILE
+        target_file = ADDRESS_FILE
     return ingestion.address.ingest.ingest(target_file, writer)
 
 def rebuild_record_tables(writer, target_file = None):
     if not target_file:
-        target_file = JSON_RECORD_FILES
+        target_file = RECORD_FILES
     return ingestion.record.ingest.ingest(target_file, writer)
+
+def rebuild_eviction_ellis_tables(writer, target_file = None):
+    if not target_file:
+        target_file = EVICTION_ELLIS_FILES
+    return ingestion.eviction.ingest.ingest_ellis(target_file, writer)
 
 TARGETS = {
     "ADDRESS" : rebuild_address_tables,
-    "RECORD" : rebuild_record_tables
+    "RECORD" : rebuild_record_tables,
+    "EVICTION_ELLIS" : rebuild_eviction_ellis_tables
 }
 
 def parse_options():
@@ -31,10 +41,6 @@ def parse_options():
     target_list = ",".join(["\"%s\"" % k for k in  TARGETS.keys()])
     target_help = "Ingest and rebuild tables for TARGET. TARGETs are:\n%s" % (
         target_list)
-    mode_list = ("\"UPDATE\" updates existing records (default), " +
-                 "\"SKIP\" skips existing records")
-    mode_help = "(optional) Specify update mode. Options are: " + mode_list
-
     parser.add_option("-t", "--target", dest="target",
                       help=target_help,
                       metavar="TARGET")
@@ -56,5 +62,4 @@ if __name__ == "__main__":
     opts = parse_options()
     db_interface = db.interface.DBInterface()
     db_interface.initialize(opts.database)
-    TARGETS[opts.target](db_interface, target_file = opts.file,
-                         mode = opts.mode)
+    TARGETS[opts.target](db_interface, target_file = opts.file)
