@@ -1,0 +1,2 @@
+sudo apt-get install libmysql++-dev
+sudo apt-get install libboost-all-dev
