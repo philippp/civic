@@ -11,9 +11,13 @@ import ingestion.eviction.ingest
 
 ADDRESS_FILE = 'data/address/EAS_address_with_blklot.xlsx'
 RECORD_FILES = 'data/record/deeds/*.json'
-EVICTION_ELLIS_FILES = [
-    'data/eviction/SF Ellis Petition List 1997-March 13.xls',
-    'data/eviction/kelsey_ellis_most_recent.csv']
+EVICTION_FILES = {
+    'ellis' : [
+        'data/eviction/SF Ellis Petition List 1997-March 13.xls',
+        'data/eviction/kelsey_ellis_most_recent.csv'],
+    'omi' : [
+        'data/eviction/kelsey_omi_most_recent.csv']
+}
 
 def rebuild_address_tables(writer, target_file = None):
     if not target_file:
@@ -25,15 +29,16 @@ def rebuild_record_tables(writer, target_file = None):
         target_file = RECORD_FILES
     return ingestion.record.ingest.ingest(target_file, writer)
 
-def rebuild_eviction_ellis_tables(writer, target_file = None):
+def rebuild_eviction_tables(writer, target_file = None):
     if not target_file:
-        target_file = EVICTION_ELLIS_FILES
-    return ingestion.eviction.ingest.ingest_ellis(target_file, writer)
+        target_file = EVICTION_FILES
+    ingestion.eviction.ingest.ingest_ellis(target_file['ellis'], writer)
+    ingestion.eviction.ingest.ingest_omi(target_file['omi'], writer)
 
 TARGETS = {
     "ADDRESS" : rebuild_address_tables,
     "RECORD" : rebuild_record_tables,
-    "EVICTION_ELLIS" : rebuild_eviction_ellis_tables
+    "EVICTION" : rebuild_eviction_tables
 }
 
 def parse_options():

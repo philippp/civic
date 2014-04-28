@@ -7,8 +7,8 @@ CREATE TABLE eviction
   landlord_names VARCHAR(255),
   address VARCHAR(255) NOT NULL,
   eviction_type ENUM('ellis', 'omi') NOT NULL,
-  senior_disabled SMALLINT,
-  units SMALLINT,
+  senior_disabled_count SMALLINT,
+  unit_count SMALLINT,
   PRIMARY KEY(petition)
 )
 ENGINE=InnoDB
