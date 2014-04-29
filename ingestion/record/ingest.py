@@ -24,6 +24,7 @@ def ingest(json_record_file, db_interface):
         ingest_records(records, db_interface)
         logging.info("Ingested %s with %d records in %2.2f seconds",
                      source_file, len(records), time.time() - t_start)
+    logging.info("Successfully imported eviction data.")
     return True
 
 def ingest_records(records, db_interface):
@@ -57,7 +58,7 @@ def ingest_records(records, db_interface):
     for db_record in db_records:
         vals.append([db_record[c] for c in colnames])
 
-    db_interface.write_row(
+    db_interface.write_rows(
         colnames, vals, "record", update_cols = update_cols, autocommit = False)
 
     # Step 2: Write all APNs (blocks and lots) for these records.
@@ -75,7 +76,7 @@ def ingest_records(records, db_interface):
         vals = []
         for db_record in db_records:
             vals.append([db_record[c] for c in colnames])
-        db_interface.write_row(colnames, vals, "record_to_block_lot",
+        db_interface.write_rows(colnames, vals, "record_to_block_lot",
                                update_cols = update_cols,
                                autocommit = False)
 
@@ -89,7 +90,7 @@ def ingest_records(records, db_interface):
     alias_entity_map = dict()
     if len(entity_aliases) == 0:
         return
-
+    print "3a"
     # Step 3.a: Which aliases do we already know?
     response = db_interface.read_rows(
         ['alias_name', 'entity_id'],
@@ -100,7 +101,10 @@ def ingest_records(records, db_interface):
 
     # Step 3.b: For the aliases new to us, we must create entities.
     new_aliases = list(set(entity_aliases) - set(alias_entity_map.keys()))
-    response = db_interface.write_row(
+    # Since it's a multi-row insert, we make each alias a row and send a
+    # list of rows.
+    
+    response = db_interface.write_rows(
         ['best_name'],
         new_aliases,
         'entity')
@@ -118,7 +122,7 @@ def ingest_records(records, db_interface):
     new_alias_rows = list()
     for alias in new_aliases:
         new_alias_rows.append([alias, alias_entity_map[alias]])
-    response = db_interface.write_row(
+    response = db_interface.write_rows(
         ['alias_name', 'entity_id'],
         new_alias_rows,
         'alias_to_entity')
@@ -130,6 +134,6 @@ def ingest_records(records, db_interface):
             for alias in record[relation]:
                 record_to_entity_list.append(
                     [record['id'], alias_entity_map[alias], relation])
-    db_interface.write_row(
+    db_interface.write_rows(
         ["record_id", "entity_id", "relation"], record_to_entity_list,
         "record_to_entity", ["record_id", "entity_id", "relation"])

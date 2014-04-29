@@ -145,8 +145,8 @@ def ingest_ellis_csv(source_file, db_interface):
                 'ellis' # eviction_type
                 ])
         if len(rows) > page_size:
-            db_interface.write_row(
+            db_interface.write_rows(
                 target_cols, rows, 'eviction', update_cols = target_cols)
             rows = list()
-    db_interface.write_row(
+    db_interface.write_rows(
         target_cols, rows, 'eviction', update_cols = target_cols)

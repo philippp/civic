@@ -43,7 +43,7 @@ def ingest(source_file, db_interface):
             break
 
         try:
-            db_interface.write_row(COLUMN_ORDERING, row_values, "address")
+            db_interface.write_rows(COLUMN_ORDERING, row_values, "address")
         except Exception, e:
             print str(e)
             pprint.pprint(row)
