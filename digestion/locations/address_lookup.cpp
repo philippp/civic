@@ -6,6 +6,7 @@
 using mysqlpp::Query;
 using mysqlpp::StoreQueryResult;
 
+namespace {
 void string_split(const std::string &s, char delim,
 		  std::vector<std::string>* elems) {
   std::stringstream ss(s);
@@ -15,11 +16,18 @@ void string_split(const std::string &s, char delim,
   }
 }
 
+struct IsJunkToken {
+  bool operator()(const string& arString) const {
+    return (arString == "APT" || arString == "UNIT");
+  }
+};
+}
 
 void AddressLookup::Parse(const string& address_str,
 			  vector<Address>* addresses) const {
-  std::cout << "Interpreting address_str" << address_str << std::endl;
-
+  // We populate a prototypical address and resolve number ranges/lists
+  // once everything is parsed.
+  Address address;
   // Tokenize the address.
   vector<string> address_tokens;
   boost::regex regex("([a-zA-Z0-9\\-]+)");
@@ -32,25 +40,26 @@ void AddressLookup::Parse(const string& address_str,
     address_tokens.push_back(token);
     start = results[0].second;
   }
-  Address address;
-  int street_type_idx = -1;
-  int street_name_idx = -1;
-  int street_number_idx = -1;
+  address_tokens.erase(std::remove_if(address_tokens.begin(),
+				      address_tokens.end(),
+				      IsJunkToken()),
+		       address_tokens.end());
+  // The token index of the street name varies based on how the street number
+  // is specified (ex: 14D vs 14 D).
+  size_t street_name_idx = 1;
 
-  // Strategy 1: Try to find a street type to anchor off of.
-  for (const string& token : address_tokens) {
-    if (street_types_.find(token) != street_types_.end()) {
-      address["street_type"] = token;
-      std::cout << "Found street type: " << token << std::endl;
-    }
-  }
+  // The token index of the (possible) apartment number varies on whether the
+  // street had a street type.
+  size_t unit_number_idx = -1;
+
+  // Find the address number, especting it the first token in the string.
   boost::match_results<std::string::const_iterator> address_num_result;
   boost::regex address_num_regex("([0-9\\-]+)([A-Z]?)");
   if (boost::regex_match(address_tokens[0], address_num_result,
 			 address_num_regex)) {
+
     string token(address_num_result[1].first, address_num_result[1].second);
     address["add_num"] = token;
-    std::cout << "Found token: " << token << std::endl;
     string addr_n_suffix(address_num_result[2].first,
 			 address_num_result[2].second);
     if (addr_n_suffix.length() != 0) {
@@ -58,10 +67,51 @@ void AddressLookup::Parse(const string& address_str,
     }
     else if (address_tokens[1].length() == 1) {
       address["addr_n_suffix"] = address_tokens[1];
+      street_name_idx = 2;
     }
-    std::cout << "Suffix: " << address["addr_n_suffix"] << std::endl;
+  }
+
+  // Street names do not have numbers in the second word of the street.
+  // Pick up N-tuples of tokens after the address-number, until we
+  // encounter something non-alphabetical.
+  size_t street_name_end_idx = address_tokens.size();
+  while (street_name_end_idx >= street_name_idx) {
+    std::stringstream ss;
+    for(size_t i = street_name_idx; i < street_name_end_idx; ++i) {
+      if(i != street_name_idx)
+	ss << " ";
+      ss << address_tokens[i];
+    }
+    if (street_names_.find(ss.str()) != street_names_.end()) {
+      address["street_name"] = street_names_.at(ss.str());
+      unit_number_idx = street_name_end_idx;
+      break;
+    }
+    street_name_end_idx--;
   }
   
+  // Try to find a street type (ex: Ave, St, etc) -- there may not be one!
+  for (const string& token : address_tokens) {
+    if (street_types_.find(token) != street_types_.end()) {
+      address["street_type"] = street_types_.at(token);
+      unit_number_idx++;
+    }
+  }
+  // Finally, we want to check for an apartment number, which again may not exist.
+  if (unit_number_idx > 0 && unit_number_idx < address_tokens.size()) {
+    // Join the remaining tokens and try to match a known apartment number.
+    std::stringstream ss;
+    for(size_t i = unit_number_idx; i < address_tokens.size(); ++i) {
+      if(i != unit_number_idx) {
+	ss << " ";
+      }
+      ss << address_tokens[i];
+    }
+    if (unit_numbers_.find(ss.str()) != unit_numbers_.end()) {
+      address["unit_num"] = ss.str();
+    }
+  }
+  addresses->push_back(address);
 }
 
 int AddressLookup::Initialize() {
@@ -112,8 +162,7 @@ int AddressLookup::Initialize() {
   for (size_t i = 0; i < result.num_rows(); i++) {
     string unit_num;
     result[i]["unit_num"].to_string(unit_num);
-    street_names_[unit_num] = unit_num;
+    unit_numbers_[unit_num] = unit_num;
   }
-
   return 0;
 }

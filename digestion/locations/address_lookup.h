@@ -18,7 +18,7 @@ class AddressLookup {
 public:
   // Parses an address string that represents one or more addresses, populates
   // a vector with all matching addresses.
-  void Parse(const string& address_str, vector<Address>* addresses) const;
+  void Parse(const string& address_str, vector<Address>* address) const;
   // Loads suffixes and street names into memory.
   int Initialize();
 

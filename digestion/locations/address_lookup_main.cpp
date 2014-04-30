@@ -4,14 +4,22 @@
 using std::string;
 
 int main(int argc, char* argv[]) {
-  std::cout << "Starting!\n";
   AddressLookup al;
   al.Initialize();
-  vector<Address> addresses;
-  string parse_str = "760 14TH ST APT#1";
-  if (argc > 1) {
-    parse_str = string(argv[1]);
+  if (argc < 2) {
+    std::cout << "Usage: " << std::endl;
+    std::cout << argv[0] << " \"ADDRESS\"" << std::endl;
+    return -1;
   }
-  al.Parse(parse_str, &addresses);
-  std::cout << "Done!\n";
+  vector<Address> addresses;
+  al.Parse(string(argv[1]), &addresses);
+  for (size_t i = 0; i < addresses.size(); ++i) {
+    const Address& address = addresses[i];
+    std::cout << "[[ Address " << i << " ]]" << std::endl;
+    for (const auto& iter : address) {
+      std::cout << iter.first << ": " << iter.second << std::endl;
+    }
+  }
+
+  return 0;
 } 

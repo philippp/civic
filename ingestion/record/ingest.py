@@ -24,7 +24,7 @@ def ingest(json_record_file, db_interface):
         ingest_records(records, db_interface)
         logging.info("Ingested %s with %d records in %2.2f seconds",
                      source_file, len(records), time.time() - t_start)
-    logging.info("Successfully imported eviction data.")
+    logging.info("Successfully imported record data.")
     return True
 
 def ingest_records(records, db_interface):

@@ -52,3 +52,4 @@ def ingest(source_file, db_interface):
         rows_written += 1
         if rows_written % 1000 == 0:
             logging.info("%d rows written", rows_written)
+    logging.info("Successfully imported address data.")

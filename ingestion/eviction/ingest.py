@@ -11,11 +11,13 @@ def ingest_ellis(source_files, db_interface):
             ingest_ellis_xls(source_file, db_interface)
         elif source_file.endswith(".csv"):
             ingest_ellis_csv(source_file, db_interface)
+    logging.info("Successfully imported ellis eviction data.")
 
 def ingest_omi(source_files, db_interface):
     for source_file in source_files:
         if source_file.endswith(".csv"):
             ingest_omi_csv(source_file, db_interface)
+    logging.info("Successfully imported omi eviction data.")
 
 def is_number(s):
     try:
