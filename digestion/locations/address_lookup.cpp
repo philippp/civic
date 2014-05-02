@@ -23,11 +23,15 @@ struct IsJunkToken {
 };
 }
 
+void AddressLookup::SetInAllAddresses(const string& key, const string& val,
+				      vector<Address>* addresses) const {
+  for (Address& address : *addresses) {
+    address[key] = val;
+  }
+}
+
 void AddressLookup::Parse(const string& address_str,
 			  vector<Address>* addresses) const {
-  // We populate a prototypical address and resolve number ranges/lists
-  // once everything is parsed.
-  Address address;
   // Tokenize the address.
   vector<string> address_tokens;
   boost::regex regex("([a-zA-Z0-9\\-]+)");
@@ -46,7 +50,7 @@ void AddressLookup::Parse(const string& address_str,
 		       address_tokens.end());
   // The token index of the street name varies based on how the street number
   // is specified (ex: 14D vs 14 D).
-  size_t street_name_idx = 1;
+  size_t street_name_idx = 0;
 
   // The token index of the (possible) apartment number varies on whether the
   // street had a street type.
@@ -55,19 +59,42 @@ void AddressLookup::Parse(const string& address_str,
   // Find the address number, especting it the first token in the string.
   boost::match_results<std::string::const_iterator> address_num_result;
   boost::regex address_num_regex("([0-9\\-]+)([A-Z]?)");
-  if (boost::regex_match(address_tokens[0], address_num_result,
-			 address_num_regex)) {
 
+  // Index of the current step of (multi-)address number parsing.
+  size_t cur_addr_num_idx = 0;
+  while (boost::regex_match(address_tokens[cur_addr_num_idx],
+			    address_num_result,
+			    address_num_regex)) {
+
+    Address address;
     string token(address_num_result[1].first, address_num_result[1].second);
     address["add_num"] = token;
     string addr_n_suffix(address_num_result[2].first,
 			 address_num_result[2].second);
+    cur_addr_num_idx++;
+    street_name_idx++;
     if (addr_n_suffix.length() != 0) {
       address["addr_n_suffix"] = addr_n_suffix;
     }
-    else if (address_tokens[1].length() == 1) {
-      address["addr_n_suffix"] = address_tokens[1];
-      street_name_idx = 2;
+    else if (address_tokens[cur_addr_num_idx].length() == 1) {
+      address["addr_n_suffix"] = address_tokens[cur_addr_num_idx];
+      // If the post-incremented addr index is a suffix, we skip ahead
+      // once more.
+      cur_addr_num_idx++;
+      street_name_idx++;
+    }
+    vector<string> numbers;
+    string_split(address["add_num"], '-', &numbers);
+    addresses->push_back(address);
+    if (numbers.size() == 2) {
+      (*addresses)[0]["add_num"] = numbers.at(0);
+      int start_num = atoi(numbers[0].c_str());
+      int end_num = atoi(numbers[1].c_str());
+      for (int i = start_num + 1; i <= end_num; ++i) {
+	Address next_address;
+	next_address["add_num"] = std::to_string(i);
+	addresses->push_back(next_address);
+      }
     }
   }
 
@@ -83,7 +110,8 @@ void AddressLookup::Parse(const string& address_str,
       ss << address_tokens[i];
     }
     if (street_names_.find(ss.str()) != street_names_.end()) {
-      address["street_name"] = street_names_.at(ss.str());
+      SetInAllAddresses("street_name", street_names_.at(ss.str()),
+			addresses);
       unit_number_idx = street_name_end_idx;
       break;
     }
@@ -93,7 +121,8 @@ void AddressLookup::Parse(const string& address_str,
   // Try to find a street type (ex: Ave, St, etc) -- there may not be one!
   for (const string& token : address_tokens) {
     if (street_types_.find(token) != street_types_.end()) {
-      address["street_type"] = street_types_.at(token);
+      SetInAllAddresses("street_type", street_types_.at(token),
+			addresses);
       unit_number_idx++;
     }
   }
@@ -108,10 +137,9 @@ void AddressLookup::Parse(const string& address_str,
       ss << address_tokens[i];
     }
     if (unit_numbers_.find(ss.str()) != unit_numbers_.end()) {
-      address["unit_num"] = ss.str();
+      SetInAllAddresses("unit_num", ss.str(), addresses);
     }
   }
-  addresses->push_back(address);
 }
 
 int AddressLookup::Initialize() {

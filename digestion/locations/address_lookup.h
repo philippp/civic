@@ -23,6 +23,9 @@ public:
   int Initialize();
 
 private:
+  void SetInAllAddresses(const string& key, const string& val,
+		    vector<Address>* addresses) const;
+
   unique_ptr<mysqlpp::Connection> connection_;
 
   // All recognized street names in San Francisco, including aliases. For
