@@ -41,7 +41,8 @@ def ingest_records(records, db_interface):
         record['grantors'] = [scrub(g) for g in record['grantors']]
         grantees_raw = ", ".join(["\"%s\"" % g for g in record['grantees']])
         grantors_raw = ", ".join(["\"%s\"" % g for g in record['grantors']])
-
+        if hasattr(record["reel_image"], "__iter__"):
+            record["reel_image"] = ",".join(record["reel_image"])
         db_records.append({
             "id" : record["id"],
             "record_date" : datetime.datetime.strptime(
@@ -58,8 +59,14 @@ def ingest_records(records, db_interface):
     for db_record in db_records:
         vals.append([db_record[c] for c in colnames])
 
-    db_interface.write_rows(
-        colnames, vals, "record", update_cols = update_cols, autocommit = False)
+    try:
+        db_interface.write_rows(
+            colnames, vals, "record", update_cols = update_cols, autocommit = False)
+    except Exception, e:
+        import pdb;
+        pdb.set_trace()
+        a = 2
+
 
     # Step 2: Write all APNs (blocks and lots) for these records.
     db_records = []
@@ -90,7 +97,6 @@ def ingest_records(records, db_interface):
     alias_entity_map = dict()
     if len(entity_aliases) == 0:
         return
-    print "3a"
     # Step 3.a: Which aliases do we already know?
     response = db_interface.read_rows(
         ['alias_name', 'entity_id'],

@@ -1,4 +1,5 @@
 /* Address Table */
+DROP TABLE IF EXISTS address;
 CREATE TABLE address
 (
   addr_n_suffix varchar(10),

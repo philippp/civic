@@ -68,10 +68,10 @@ def ingest_omi_csv(source_file, db_interface):
                 'omi' # eviction_type
                 ])
         if len(rows) > page_size:
-            db_interface.write_row(
+            db_interface.write_rows(
                 target_cols, rows, 'eviction', update_cols = target_cols)
             rows = list()
-    db_interface.write_row(
+    db_interface.write_rows(
         target_cols, rows, 'eviction', update_cols = target_cols)
 
 """
@@ -103,12 +103,12 @@ def ingest_ellis_xls(source_file, db_interface):
                 'ellis'
                 ])
         if len(update_page) == update_page_size:
-            db_interface.write_row(
+            db_interface.write_rows(
                 target_cols, update_page, 'eviction', update_cols = target_cols)
             update_page = list()
         rowidx += 1
 
-    db_interface.write_row(
+    db_interface.write_rows(
         target_cols, update_page, 'eviction', update_cols = target_cols)
     update_page = list()
 

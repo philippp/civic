@@ -8,9 +8,17 @@ import db.interface
 import ingestion.address.ingest
 import ingestion.record.ingest
 import ingestion.eviction.ingest
+import digestion.locations.resolve_eviction_addresses
 
 ADDRESS_FILE = 'data/address/EAS_address_with_blklot.xlsx'
-RECORD_FILES = 'data/record/deeds/*.json'
+RECORD_FILES = [
+    'data/record/deed/*.json',
+    'data/record/deed_nontax/*.json',
+    'data/record/deed_of_trust/*.json',
+    'data/record/deed_of_trust_with_rents/*.json',
+    'data/record/notice_of_constraints_on_real_property/*.json'
+    ]
+    
 EVICTION_FILES = {
     'ellis' : [
         'data/eviction/SF Ellis Petition List 1997-March 13.xls',
@@ -27,7 +35,15 @@ def rebuild_address_tables(writer, target_file = None):
 def rebuild_record_tables(writer, target_file = None):
     if not target_file:
         target_file = RECORD_FILES
-    return ingestion.record.ingest.ingest(target_file, writer)
+    success = True
+    if hasattr(target_file, "__iter__"):
+        for target_file_ in target_file:
+            success = success and ingestion.record.ingest.ingest(
+                target_file_, writer)
+    else:
+        success = ingestion.record.ingest.ingest(
+            target_file, writer)
+    return success
 
 def rebuild_eviction_tables(writer, target_file = None):
     if not target_file:
@@ -35,10 +51,16 @@ def rebuild_eviction_tables(writer, target_file = None):
     ingestion.eviction.ingest.ingest_ellis(target_file['ellis'], writer)
     ingestion.eviction.ingest.ingest_omi(target_file['omi'], writer)
 
+# Requires eviction and address tables to have been built AND for the address
+# resolution service to be running.
+def digest_eviction_tables(writer, target_file = None):
+    digestion.locations.resolve_eviction_addresses.augment_evictions(writer)
+
 TARGETS = {
     "ADDRESS" : rebuild_address_tables,
     "RECORD" : rebuild_record_tables,
-    "EVICTION" : rebuild_eviction_tables
+    "EVICTION" : rebuild_eviction_tables,
+    "EVICTION_DIGEST" : digest_eviction_tables
 }
 
 def parse_options():

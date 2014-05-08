@@ -157,7 +157,7 @@ void AddressLookup::Parse(const string& address_str,
 
 int AddressLookup::Initialize() {
   connection_.reset(new mysqlpp::Connection(false));
-  connection_->connect("sfabuse", "localhost", "root", "");
+  connection_->connect("sfabuse_dev", "localhost", "root", "");
   Query query = connection_->query();
   query << "SELECT DISTINCT street_name FROM address";
   StoreQueryResult result = query.store();
@@ -220,8 +220,9 @@ void AddressLookup::LookupByAddresses(vector<Address>& to_lookup,
     string where_clause = "";
     bool first = true;
     for (const auto& iter : address) {
-      if (iter.first == "unit_num") {
-	continue;  // Unit numbers aren't well standardized. Try later.
+      if (iter.first == "unit_num" || iter.first == "addr_n_suffix") {
+	continue;  // Unit numbers and number suffixes aren't well standardized.
+	// Try later.
       }
       string val = iter.second;
       query.escape_string(&val);
@@ -261,7 +262,6 @@ void AddressLookup::LookupByAddresses(vector<Address>& to_lookup,
 
   query << "SELECT " + ss_select.str() + " FROM address WHERE " + \
     ss_where.str();
-  std::cout << query.str();
   StoreQueryResult result = query.store();  
   if (query.errnum() != 0) {
     std::cout << "Last Error: " << query.error() << std::endl;
