@@ -20,6 +20,15 @@ int main(int argc, char* argv[]) {
       std::cout << iter.first << ": " << iter.second << std::endl;
     }
   }
+  vector<Address> resolved_addresses;
+  al.LookupByAddresses(addresses, &resolved_addresses);
 
+  for (size_t i = 0; i < resolved_addresses.size(); ++i) {
+    const Address& resolved_address = resolved_addresses[i];
+    std::cout << "[[ Resolved Address " << i << " ]]" << std::endl;
+    for (const auto& iter : resolved_address) {
+      std::cout << iter.first << ": " << iter.second << std::endl;
+    }
+  }
   return 0;
 } 

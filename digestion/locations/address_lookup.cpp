@@ -7,21 +7,30 @@ using mysqlpp::Query;
 using mysqlpp::StoreQueryResult;
 
 namespace {
-void string_split(const std::string &s, char delim,
-		  std::vector<std::string>* elems) {
-  std::stringstream ss(s);
-  std::string item;
-  while (std::getline(ss, item, delim)) {
-    elems->push_back(item);
+  void string_split(const std::string &s, char delim,
+		    std::vector<std::string>* elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+      elems->push_back(item);
+    }
   }
-}
+  
+  // Discards tokens that do not add information for parsing.
+  struct IsJunkToken {
+    bool operator()(const string& arString) const {
+      return (arString == "APT" || arString == "UNIT");
+    }
+  };
 
-struct IsJunkToken {
-  bool operator()(const string& arString) const {
-    return (arString == "APT" || arString == "UNIT");
-  }
-};
-}
+  // Check if the address is parsed badly and should be omitted from results.
+  struct IsAddressBadlyParsed {
+    bool operator()(const Address& address) const {
+      return (address.find("addr_num") == address.end() ||
+	      address.find("street_name") == address.end());
+    }
+  };
+}  // namespace
 
 void AddressLookup::SetInAllAddresses(const string& key, const string& val,
 				      vector<Address>* addresses) const {
@@ -68,7 +77,7 @@ void AddressLookup::Parse(const string& address_str,
 
     Address address;
     string token(address_num_result[1].first, address_num_result[1].second);
-    address["add_num"] = token;
+    address["addr_num"] = token;
     string addr_n_suffix(address_num_result[2].first,
 			 address_num_result[2].second);
     cur_addr_num_idx++;
@@ -84,15 +93,15 @@ void AddressLookup::Parse(const string& address_str,
       street_name_idx++;
     }
     vector<string> numbers;
-    string_split(address["add_num"], '-', &numbers);
+    string_split(address["addr_num"], '-', &numbers);
     addresses->push_back(address);
     if (numbers.size() == 2) {
-      (*addresses)[0]["add_num"] = numbers.at(0);
+      (*addresses)[0]["addr_num"] = numbers.at(0);
       int start_num = atoi(numbers[0].c_str());
       int end_num = atoi(numbers[1].c_str());
       for (int i = start_num + 1; i <= end_num; ++i) {
 	Address next_address;
-	next_address["add_num"] = std::to_string(i);
+	next_address["addr_num"] = std::to_string(i);
 	addresses->push_back(next_address);
       }
     }
@@ -140,6 +149,10 @@ void AddressLookup::Parse(const string& address_str,
       SetInAllAddresses("unit_num", ss.str(), addresses);
     }
   }
+  addresses->erase(std::remove_if(addresses->begin(),
+				  addresses->end(),
+				  IsAddressBadlyParsed()),
+		   addresses->end());
 }
 
 int AddressLookup::Initialize() {
@@ -193,4 +206,74 @@ int AddressLookup::Initialize() {
     unit_numbers_[unit_num] = unit_num;
   }
   return 0;
+}
+
+void AddressLookup::LookupByAddresses(vector<Address>& to_lookup,
+				      vector<Address>* found_addresses,
+				      size_t limit) {
+  if (to_lookup.empty()) {
+    return;
+  }
+  vector<string> where_clauses_list;
+  Query query = connection_->query();
+  for (const Address& address : to_lookup) {
+    string where_clause = "";
+    bool first = true;
+    for (const auto& iter : address) {
+      if (iter.first == "unit_num") {
+	continue;  // Unit numbers aren't well standardized. Try later.
+      }
+      string val = iter.second;
+      query.escape_string(&val);
+      if (!first) {
+	where_clause += " AND ";
+      } else {
+	first = false;
+      }
+      where_clause += ("("+iter.first + "=\"" + val + "\")");
+    }
+    where_clauses_list.push_back(where_clause);
+  }
+
+  // Where fields.
+  std::stringstream ss_where;
+  ss_where << "(";
+  for(size_t i = 0; i < where_clauses_list.size(); ++i) {
+    if(i != 0) {
+      ss_where << ") OR (";
+    }
+    ss_where << where_clauses_list[i];
+  }
+  ss_where << ")";
+
+  // Select fields.
+  std::stringstream ss_select;
+  const size_t field_num = 9;
+  const char* field_list[] = {"addr_n_suffix", "addr_num", "block_lot",
+			      "longitude", "latitude", "street_name",
+			      "street_type", "unit_num", "zipcode"};
+  for(size_t i = 0; i < field_num; ++i) {
+    if(i != 0) {
+      ss_select << ", ";
+    }
+    ss_select << field_list[i];
+  }
+
+  query << "SELECT " + ss_select.str() + " FROM address WHERE " + \
+    ss_where.str();
+  std::cout << query.str();
+  StoreQueryResult result = query.store();  
+  if (query.errnum() != 0) {
+    std::cout << "Last Error: " << query.error() << std::endl;
+    return;
+  }
+  size_t result_count = result.num_rows();
+  found_addresses->resize(result_count);
+  for (size_t i = 0; i < result_count; i++) {
+    size_t column_idx = 0;
+    for (const auto& iter : result[i]) {
+      (*found_addresses)[i][field_list[column_idx]] = string(iter);
+      column_idx++;
+    }
+  }
 }

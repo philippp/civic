@@ -22,10 +22,18 @@ public:
   // Loads suffixes and street names into memory.
   int Initialize();
 
+  // Given an address with some fields filled out, fetch all addresses that
+  // match.
+  void LookupByAddresses(vector<Address>& to_lookup,
+			 vector<Address>* found_addresses,
+			 size_t limit = 100);
+
 private:
+  // Set this key and value in all addresses.
   void SetInAllAddresses(const string& key, const string& val,
 		    vector<Address>* addresses) const;
 
+  // Database connection.
   unique_ptr<mysqlpp::Connection> connection_;
 
   // All recognized street names in San Francisco, including aliases. For
