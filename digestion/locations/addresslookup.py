@@ -6,9 +6,9 @@ lib = ctypes.cdll.LoadLibrary('digestion/locations/py_addresslookup.so')
 class AddressLookup(object):
     def __init__(self):
         self.looker = lib.AddressLookup_new()
-        
+
     def lookup(self, address_string):
-        addr_str = lib.LookupAddress(self.looker, address_string)
+        addr_str = lib.LookupAddress(self.looker, str(address_string))
         addresses_list = json.loads(
             ctypes.cast(addr_str, ctypes.c_char_p).value)
         lib.FreeAddressJSON(addr_str)
@@ -16,4 +16,4 @@ class AddressLookup(object):
 
 if __name__ == "__main__":
     a = AddressLookup()
-    print a.lookup("3178 16TH ST")
+    print a.lookup("2217 Cecilia Avenue")

@@ -15,7 +15,7 @@ namespace {
       elems->push_back(item);
     }
   }
-  
+
   // Discards tokens that do not add information for parsing.
   struct IsJunkToken {
     bool operator()(const string& arString) const {
@@ -69,8 +69,26 @@ void AddressLookup::Parse(const string& address_str,
   boost::match_results<std::string::const_iterator> address_num_result;
   boost::regex address_num_regex("([0-9\\-]+)([A-Z]?)");
 
-  // Index of the current step of (multi-)address number parsing.
+  // Index of the current token index for (multi-)address number parsing.
   size_t cur_addr_num_idx = 0;
+
+  unordered_map<string, string> numbers = {
+    {"ONE", "1"},
+    {"TWO" , "2"},
+    {"THREE", "3"},
+    {"FOUR", "4"},
+    {"FIVE", "5"}
+  };
+
+  // Some addresses spell out the number.
+  while (numbers.find(address_tokens[cur_addr_num_idx]) != numbers.end()) {
+    Address address;
+    address["addr_num"] = numbers[address_tokens[cur_addr_num_idx]];
+    addresses->push_back(address);
+    cur_addr_num_idx++;
+    street_name_idx++;
+  }
+
   while (boost::regex_match(address_tokens[cur_addr_num_idx],
 			    address_num_result,
 			    address_num_regex)) {
@@ -92,6 +110,7 @@ void AddressLookup::Parse(const string& address_str,
       cur_addr_num_idx++;
       street_name_idx++;
     }
+    // We also want to interpret ranges of numbers for multi-unit buildings.
     vector<string> numbers;
     string_split(address["addr_num"], '-', &numbers);
     addresses->push_back(address);
@@ -126,7 +145,7 @@ void AddressLookup::Parse(const string& address_str,
     }
     street_name_end_idx--;
   }
-  
+
   // Try to find a street type (ex: Ave, St, etc) -- there may not be one!
   for (const string& token : address_tokens) {
     if (street_types_.find(token) != street_types_.end()) {
@@ -262,7 +281,7 @@ void AddressLookup::LookupByAddresses(vector<Address>& to_lookup,
 
   query << "SELECT " + ss_select.str() + " FROM address WHERE " + \
     ss_where.str();
-  StoreQueryResult result = query.store();  
+  StoreQueryResult result = query.store();
   if (query.errnum() != 0) {
     std::cout << "Last Error: " << query.error() << std::endl;
     return;
