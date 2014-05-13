@@ -1,5 +1,5 @@
 #/bin/bash
-export DATABASE_TARGET=$1
+export DATABASE_TARGET=PROD
 export STARTDATE=$(date --date="last week" +%Y%m%d)
 export ENDDATE=$(date +%Y%m%d)
 
