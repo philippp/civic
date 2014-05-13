@@ -60,7 +60,7 @@ TARGETS = {
     "ADDRESS" : rebuild_address_tables,
     "RECORD" : rebuild_record_tables,
     "EVICTION" : rebuild_eviction_tables,
-    "EVICTION_DIGEST" : digest_eviction_tables
+    "DIGEST_EVICTION" : digest_eviction_tables
 }
 
 def parse_options():

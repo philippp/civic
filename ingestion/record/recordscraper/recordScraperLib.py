@@ -130,6 +130,7 @@ RECORD_TYPES = {
     "DEED" : "001",
     "DEED_OF_TRUST" : "002",
     "DEED_OF_TRUST_WITH_RENTS" : "003",
+    "NOTICE_OF_CONSTRAINTS_ON_REAL_PROPERTY" : "233",
 }
 
 """ Welcome to 1990. CRiis gets a POST request, calls a back-end
