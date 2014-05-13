@@ -1,10 +1,7 @@
 import ctypes
 import json
 
-try:
-    lib = ctypes.cdll.LoadLibrary('digestion/locations/py_addresslookup.so')
-except:
-    pass
+lib = ctypes.cdll.LoadLibrary('digestion/locations/py_addresslookup.so')
 
 class AddressLookup(object):
     def __init__(self):

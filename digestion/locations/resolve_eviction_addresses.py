@@ -6,10 +6,14 @@ import urllib
 import json
 import time
 import pprint
-import addresslookup
 import logging
 
-looker = addresslookup.AddressLookup()
+try:
+    import addresslookup
+    looker = addresslookup.AddressLookup()
+except Exception, e:
+    logging.warning("Failed to load AddressLookup library: %s",
+                    str(e))
 
 def augment_evictions(db_interface):
     page_size = 100
