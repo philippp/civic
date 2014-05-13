@@ -4,7 +4,7 @@ CLIBS=-pthread -lpcap -lmysqlpp -lmysqlclient -lboost_regex -ljsoncpp
 CINCLUDES=-I$(PWD) -I/usr/include/mysql
 CFLAGS+= -ggdb
 
-all: civic
+all: cgi_addresslookup py_addresslookup address_lookup_main
 
 cgi_addresslookup: digestion/locations/address_lookup.o digestion/locations/address_lookup.cpp
 	$(CC) $(CFLAGS) $(CLIBS) $(CINCLUDES) digestion/locations/cgi_addresslookup.cpp digestion/locations/address_lookup.o -o digestion/locations/cgi_addresslookup
