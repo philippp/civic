@@ -88,4 +88,4 @@ def clean_record(record):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    clean("record_archive/*.json", "deeds")
+    clean("data/record/deed/*.json", "deeds_clean")
