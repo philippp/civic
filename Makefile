@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++0x -Wall -fPIC
+CFLAGS=-std=c++11 -Wall -fPIC
 CLIBS=-lmysqlpp -lmysqlclient -lboost_regex -ljsoncpp
 CINCLUDES=-I$(PWD) -I/usr/include/mysql
 CFLAGS+= -ggdb
