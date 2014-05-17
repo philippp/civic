@@ -1,8 +1,8 @@
 # Notes for an eventual installer.
-sudo apt-get install apache2 mysql-server mysql-client python-mysqldb python-dev python-pip libxml2-dev libxslt-dev python-xlrd libmysql++-dev libboost-all-dev libjsoncpp-dev make g++
+sudo apt-get install apache2 mysql-server mysql-client python-mysqldb python-dev python-pip libxml2-dev libxslt-dev python-xlrd libmysql++-dev libboost-all-dev libjsoncpp-dev make build-essential python-software-properties
 
 # OpenPyXL depends on this lxml version.
-sudo pip install lxml==3.2.5 openpyxl
+sudo pip install --upgrade lxml==3.3.1 openpyxl
 
 # Set up a database, load all of the schemas, then...
 
