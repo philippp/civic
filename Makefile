@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS=-std=c++0x -Wall -fPIC
-CLIBS=-pthread -lpcap -lmysqlpp -lmysqlclient -lboost_regex -ljsoncpp
+CLIBS=-lmysqlpp -lmysqlclient -lboost_regex -ljsoncpp
 CINCLUDES=-I$(PWD) -I/usr/include/mysql
 CFLAGS+= -ggdb
 
