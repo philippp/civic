@@ -3,6 +3,7 @@ import sys
 import pprint
 import logging
 import openpyxl
+import string
 
 COLUMN_ORDERING = [
     "addr_n_suffix",
@@ -33,8 +34,16 @@ def ingest(source_file, db_interface):
         if not header_skipped:
             header_skipped = True
             continue
-        row_values = [c.internal_value for c in row]
-
+        # openpyxl omits null cells, so we have to line up the cols.
+        row_values = [c.value for c in row]
+        row_letters = [c.column for c in row]
+        for i in range(len(COLUMN_ORDERING)):
+            if i >= len(row_letters):
+                break
+            if row_letters[i] != string.ascii_uppercase[i]:
+                row_values.insert(i, None)
+                row_letters.insert(i, string.ascii_uppercase[i])
+            
         found_data_in_row = False
         for c in row_values:
             if c != None:
@@ -45,8 +54,11 @@ def ingest(source_file, db_interface):
             break
         rows_to_write.append(row_values)
         if len(rows_to_write) % batch_size == 0:
-            db_interface.write_rows(COLUMN_ORDERING,
-                                    rows_to_write, "address")
+            try:
+                db_interface.write_rows(COLUMN_ORDERING,
+                                        rows_to_write, "address")
+            except Exception, e:
+                import pdb; pdb.set_trace()
             rows_to_write = []
             rows_written += batch_size
             logging.info("%d rows written", rows_written)
