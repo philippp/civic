@@ -13,7 +13,7 @@ def extract_recent_constraints(db_interface,
                                start_date=""):
     start_date = start_date or \
         (datetime.date.today() -
-         datetime.timedelta(days=60)).strftime(
+         datetime.timedelta(days=180)).strftime(
             "%Y-%m-%d")
     recent_constraints.writefile(db_interface,
                                  start_date,
@@ -53,4 +53,5 @@ if __name__ == "__main__":
     opts = parse_options()
     db_interface = db.interface.DBInterface()
     db_interface.initialize(opts.database)
-    REPORTS[opts.report](db_interface, target_file = opts.file, )
+    REPORTS[opts.report](db_interface, target_file = opts.file,
+                         start_date = opts.start_date)

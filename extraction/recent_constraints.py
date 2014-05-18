@@ -1,4 +1,5 @@
 import json
+import logging
 
 def fetch(db_interface, start_date):
     # Phase one -- pull Addresses and records.
@@ -50,6 +51,9 @@ GROUP BY 1 ORDER BY 2 DESC
             record_name_map[result[0]] = list()
         record_name_map[result[0]].append(result[1])
     for result in formatted_results:
+        if result["record_id"] not in record_name_map:
+            logging.error("Failed to find grantees for %s", result["record_id"])
+            continue
         result["grantees"] = record_name_map[result["record_id"]]
     return formatted_results
 
