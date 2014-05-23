@@ -118,7 +118,7 @@ void AddressLookup::Parse(const string& address_str,
       (*addresses)[0]["addr_num"] = numbers.at(0);
       int start_num = atoi(numbers[0].c_str());
       int end_num = atoi(numbers[1].c_str());
-      for (int i = start_num + 1; i <= end_num; ++i) {
+      for (int i = start_num + 1; i <= end_num; i += 2) {
 	Address next_address;
 	next_address["addr_num"] = std::to_string(i);
 	addresses->push_back(next_address);
