@@ -34,6 +34,16 @@ class AddressLookup:
             unit_number = unit_num_db_row[0]
             self.unit_numbers.add(unit_number)
 
+    """Parse an address string and look up metadata from the database.
+    Returns a list of matching addresses, or an empty list if nothing was
+    matched. Supported address formats:
+    2-6 Main St
+    729D Long Street Name Apt #2
+    etc
+    """
+    def resolve(self, address_str):
+        return self.lookup(self.parse(address_str))
+
     def parse(self, address_str):
         address_tokens = [t.upper() for t in re.findall(
                 "([\d\w\-]+)", address_str)]
@@ -176,9 +186,6 @@ class AddressLookup:
                     address["zipcode"] = row[8]
                     matched_address_list.append(address)
         return matched_address_list
-                        
-                             
-
 
 JUNK_TOKENS = {
     "APT",
