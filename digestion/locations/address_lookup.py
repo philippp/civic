@@ -98,10 +98,15 @@ class AddressLookup:
             if len(numbers) == 2:
                 addresses[0]["addr_num"] = numbers[0]
                 start_num = int(numbers[0])
-                end_num = int(numbers[1])
-                # Consecutive units are on the same side of the street
-                for house_num in range(start_num + 2, end_num + 1, 2):
-                    addresses.append(dict(addr_num = str(house_num)))
+                try:
+                    end_num = int(numbers[1])
+                    # Consecutive units are on the same side of the street
+                    for house_num in range(start_num + 2, end_num + 1, 2):
+                        addresses.append(dict(addr_num = str(house_num)))
+                except ValueError, e:
+                    # Ex: 1215-A 20TH ST
+                    address["unit_num"] = numbers[1]
+                    pass
         if not addresses:
             logging.error("No address number found")
             return []
