@@ -8,7 +8,6 @@ import db.interface
 import ingestion.address.ingest
 import ingestion.record.ingest
 import ingestion.eviction.ingest
-import digestion.locations.resolve_eviction_addresses
 
 ADDRESS_FILE = 'data/address/EAS_address_with_blklot.xlsx'
 RECORD_FILES = [
@@ -51,16 +50,10 @@ def rebuild_eviction_tables(writer, target_file = None):
     ingestion.eviction.ingest.ingest_ellis(target_file['ellis'], writer)
     ingestion.eviction.ingest.ingest_omi(target_file['omi'], writer)
 
-# Requires eviction and address tables to have been built AND for the address
-# resolution service to be running.
-def digest_eviction_tables(writer, target_file = None):
-    digestion.locations.resolve_eviction_addresses.augment_evictions(writer)
-
 TARGETS = {
     "ADDRESS" : rebuild_address_tables,
     "RECORD" : rebuild_record_tables,
     "EVICTION" : rebuild_eviction_tables,
-    "DIGEST_EVICTION" : digest_eviction_tables
 }
 
 def parse_options():

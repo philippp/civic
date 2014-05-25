@@ -41,8 +41,8 @@ class AddressLookup:
     729D Long Street Name Apt #2
     etc
     """
-    def resolve(self, address_str):
-        return self.lookup(self.parse(address_str))
+    def lookup(self, address_str):
+        return self.lookup_parsed(self.parse(address_str))
 
     def parse(self, address_str):
         address_tokens = [t.upper() for t in re.findall(
@@ -150,7 +150,7 @@ class AddressLookup:
 
     """Given a list of parsed addresses, look up known addresses in SF.
     Populates all known metadata about the address."""
-    def lookup(self, parsed_address_list):
+    def lookup_parsed(self, parsed_address_list):
         if not parsed_address_list:
             return []
         query_kwargs = dict()
@@ -172,8 +172,9 @@ class AddressLookup:
             **query_kwargs)
 
         matched_address_list = []
-        for address in parsed_address_list:
+        for parsed_address in parsed_address_list:
             for row in rows:
+                address = dict(parsed_address)
                 if (row[1] == address["addr_num"] and \
                         row[5] == address["street_name"] and \
                         (("street_type" not in address) or 
@@ -184,7 +185,9 @@ class AddressLookup:
                     address["longitude"] = row[3]
                     address["latitude"] = row[4]
                     address["zipcode"] = row[8]
-                    matched_address_list.append(address)
+                    address["unit_num"] = row[7]
+                    if address["block_lot"] != None:
+                        matched_address_list.append(address)
         return matched_address_list
 
 JUNK_TOKENS = {
