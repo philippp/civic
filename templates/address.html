@@ -1,0 +1,30 @@
+<!doctype html>
+<title>Address Lookup</title>
+{% if lookup_address %}
+<table>
+<thead><tr>
+<td>Address Number</td>
+<td>Street Name</td>
+<td>Street Type</td>
+<td>Unit Number</td>
+<td>Zip Code</td>
+<td>Latitude</td>
+<td>Longitude</td>
+<td>Block/Lot</td>
+</tr></thead>
+{% for address in lookup_address %}
+<tr>
+<td>{{ address["addr_num"] }}</td>
+<td>{{ address["street_name"] }}</td> 
+<td>{{ address["street_type"] }}</td> 
+<td>{{ address["unit_num"] }}</td>
+<td>{{ address["zipcode"] }}</td> 
+<td>{{ address["latitude"] }}</td> 
+<td>{{ address["longitude"] }}</td> 
+<td>{{ address["block_lot"] }}</td> 
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<h1>Address not found!</h1>
+{% endif %}

@@ -51,7 +51,7 @@ class AddressLookup:
 
         # Some addresses spell out the number.
         if address_tokens[0] in NUMBERS:
-            address_token[0] = NUMBERS[address_token[0]]
+            address_tokens[0] = NUMBERS[address_tokens[0]]
 
         # The token index of the street name varies based on how the street number
         # is specified (ex: 14D vs 14 D).
@@ -97,8 +97,8 @@ class AddressLookup:
             numbers = address["addr_num"].split("-")
             if len(numbers) == 2:
                 addresses[0]["addr_num"] = numbers[0]
-                start_num = int(numbers[0])
                 try:
+                    start_num = int(numbers[0])
                     end_num = int(numbers[1])
                     # Consecutive units are on the same side of the street
                     for house_num in range(start_num + 2, end_num + 1, 2):
