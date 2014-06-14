@@ -8,8 +8,10 @@ import db.interface
 import ingestion.address.ingest
 import ingestion.record.ingest
 import ingestion.eviction.ingest
+import ingestion.zoning.ingest
 
 ADDRESS_FILE = 'data/address/EAS_address_with_blklot.xlsx'
+
 RECORD_FILES = [
     'data/record/deed/*.json',
     'data/record/deed_nontax/*.json',
@@ -25,6 +27,17 @@ EVICTION_FILES = {
     'omi' : [
         'data/eviction/kelsey_omi_most_recent.csv']
 }
+
+ZONING_FILES = {
+    'zoning' : 'data/zoning/Zoning.csv',
+    'blocklots' : 'data/zoning/Citylots.csv'
+}
+
+def rebuild_zoning_tables(writer, target_file = None):
+    if not target_file:
+        target_file = ZONING_FILES
+    return ingestion.zoning.ingest.ingest(
+        writer, target_file['zoning'], target_file['blocklots'])
 
 def rebuild_address_tables(writer, target_file = None):
     if not target_file:
@@ -54,6 +67,7 @@ TARGETS = {
     "ADDRESS" : rebuild_address_tables,
     "RECORD" : rebuild_record_tables,
     "EVICTION" : rebuild_eviction_tables,
+    "ZONING" : rebuild_zoning_tables
 }
 
 def parse_options():

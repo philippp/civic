@@ -6,14 +6,21 @@ import sys
 
 import db.interface
 import digestion.locations.resolve_eviction_addresses
+import digestion.locations.resolve_zoning_gps
 
 # Requires eviction and address tables to have been built.
 def digest_eviction_tables(writer, target_file = None):
     digestion.locations.resolve_eviction_addresses.augment_evictions(
         writer, target_file)
 
+# Requires address table to have been built.
+def digest_zoning_rules(writer, target_file = None):
+    digestion.locations.resolve_zoning_gps.resolve_zoning_rules(
+        writer, target_file)
+
 TARGETS = {
-    "EVICTION" : digest_eviction_tables
+    "EVICTION" : digest_eviction_tables,
+    "ZONING" : digest_zoning_rules
 }
 
 def parse_options():

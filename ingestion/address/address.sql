@@ -15,8 +15,9 @@ CREATE TABLE address
   street_type varchar(255),
   unit_num char(10),
   zipcode char(10),
+  zoning_sim varchar(10),
   INDEX by_address(address),
   INDEX by_blklot(block_lot)
 )
 DEFAULT CHARSET=utf8;
-;
+
