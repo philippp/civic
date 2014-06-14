@@ -45,7 +45,7 @@ class DBInterface(object):
             self.db.commit()
         return self.cursor.lastrowid
 
-    def read_rows(self, colnames, table, limit=-1, limit2=0, **kwargs):
+    def read_rows(self, colnames, table, limit=-1, limit2=0, ordergroup='', **kwargs):
         joined_colnames = ",".join(colnames)
         sqlstr = "SELECT %s FROM %s" % (joined_colnames, table)
         if kwargs.keys():
@@ -64,6 +64,8 @@ class DBInterface(object):
                 else:
                     conditionals.append("%s = %s" % (key, val))
             sqlstr += " AND ".join(conditionals)
+        if ordergroup:
+            sqlstr += (" " + ordergroup)
         if limit >= 0:
             sqlstr += " LIMIT %d" % limit
             if limit2 > 0:
