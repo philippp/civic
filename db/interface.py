@@ -101,16 +101,13 @@ class DBInterface(object):
             update_list.append("%s=%s" % (k, v))
         update_str = ", ".join(update_list)
         
-
         where_list = list()
         for key, val in where_dict.iteritems():
             where_list.append(self.make_equals_or_in(key, val))
         where_str = " AND ".join(where_list)
-        
-
         sqlstr = "UPDATE %s SET %s WHERE %s" % (
             table, update_str, where_str)
-        print sqlstr
+
         self.cursor.execute(sqlstr)
         if autocommit:
             self.db.commit()

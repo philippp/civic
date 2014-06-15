@@ -6,12 +6,13 @@ import datetime
 
 col_to_idx = {
     'blocklot' : 0,
-    'transfer_count' : 1,
-    'earliest_transfer' : 2,
-    'latest_transfer' : 3,
-    'fastest_transfer_days' : 4,
-    'average_transfer_days' : 5,
-    'days_since_latest_transfer' : 6
+    'zone' : 1,
+    'transfer_count' : 2,
+    'earliest_transfer' : 3,
+    'latest_transfer' : 4,
+    'fastest_transfer_days' : 5,
+    'average_transfer_days' : 6,
+    'days_since_latest_transfer' : 7
 }
 
 PAGE_SIZE = 15000
@@ -21,6 +22,7 @@ def fetch(db_interface, target_file=None):
     write_rows_to_csv(blockinfos_list, target_file)
 
 def fetch_transfers(db_interface):
+    blocklot_zones = load_blocklot_zones(db_interface)
     blocklot_timeline = load_blocklot_timeline(db_interface)
     blockinfos = list()
     idx_to_col = dict()
@@ -33,6 +35,7 @@ def fetch_transfers(db_interface):
     for blocklot, timeline in blocklot_timeline.iteritems():
         blockinfo = [''] * len(col_to_idx.keys())
         blockinfo[col_to_idx["blocklot"]] = blocklot
+        blockinfo[col_to_idx["zone"]] = blocklot_zones.get(blocklot, "??")
         blockinfo[col_to_idx["transfer_count"]] = len(timeline)
         blockinfo[col_to_idx["earliest_transfer"]] = timeline[-1]
         blockinfo[col_to_idx["latest_transfer"]] = timeline[0]
@@ -54,6 +57,34 @@ def fetch_transfers(db_interface):
             datetime.date.today() - timeline[0]).days
         blockinfos.append(blockinfo)
     return blockinfos
+
+def load_blocklot_zones(db_interface):
+    offset = 0
+    blocklot_zones = dict()
+    while offset >= 0:
+        results = db_interface.read_rows(
+            ["zoning_sim", "block_lot"],
+            "address",
+            limit = offset,
+            limit2 = PAGE_SIZE,
+            ordergroup = "ORDER BY block_lot DESC")
+
+        # We want to fetch all records for a blocklot, so we read until
+        # the last blocklot (which may have gotten snipped).
+        logging.info("Fetched %d results.", len(results))
+        if len(results) == PAGE_SIZE:
+            filtered_results = [r for r in results if r[1] != results[-1][1]]
+            offset += len(filtered_results)
+            results = filtered_results
+        else:
+            offset = -1
+        for i in range(len(results)):
+            if i > 0:
+                if results[i][1] == results[i-1][1]:
+                    continue
+            blocklot_zones[results[i][1]] = results[i][0]
+    return blocklot_zones
+
 
 def load_blocklot_timeline(db_interface):
     offset = 0
@@ -93,7 +124,6 @@ def load_blocklot_timeline(db_interface):
 SELECT id, record_date, grantees_raw, grantors_raw
 FROM record WHERE id IN (%s) ORDER BY record_date DESC
 """ % record_id_qstring
-        print query_string
         db_interface.cursor.execute(query_string)
         results = db_interface.cursor.fetchall()
         for result in results:
